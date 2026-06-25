@@ -7,6 +7,22 @@ const RoomSchema = new mongoose.Schema({
     unique: true,
     index: true
   },
+  roomName: {
+    type: String,
+    required: true,
+    default: 'Collab Workspace'
+  },
+  ownerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  visibility: {
+    type: String,
+    enum: ['public', 'private'],
+    default: 'public',
+    required: true
+  },
   selectedLanguage: {
     type: String,
     default: 'javascript'
@@ -20,3 +36,4 @@ const RoomSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('Room', RoomSchema);
+

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const logger = require('../utils/logger');
 
 const connectDB = async () => {
   try {
@@ -7,11 +8,11 @@ const connectDB = async () => {
     await mongoose.connect(connUri, {
       serverSelectionTimeoutMS: 3000
     });
-    console.log(`[Database] MongoDB Connected`);
+    logger.info(`[Database] MongoDB Connected`);
     global.useInMemoryDb = false;
   } catch (error) {
-    console.warn(`[Database] MongoDB connection failed: ${error.message}`);
-    console.warn(`[Database] Falling back to IN-MEMORY database mode for testing.`);
+    logger.warn(`[Database] MongoDB connection failed: ${error.message}`);
+    logger.warn(`[Database] Falling back to IN-MEMORY database mode for testing.`);
     global.useInMemoryDb = true;
   }
 };

@@ -1,17 +1,32 @@
 const fileService = require('../services/fileService');
+const RoomMember = require('../models/RoomMember');
+const { roomMembers } = require('../services/memoryStore');
+
+const getRole = async (roomId, userId) => {
+  if (!userId) return null;
+  if (global.useInMemoryDb) {
+    const member = roomMembers.find(m => m.roomId === roomId && m.userId === userId);
+    return member ? member.role : null;
+  } else {
+    const member = await RoomMember.findOne({ roomId, userId });
+    return member ? member.role : null;
+  }
+};
 
 /**
- * Handle language synchronization events.
- *
- * @param {object} io - Socket.io server instance
- * @param {object} socket - Connected socket instance
+ * Handle language synchronization events (protected).
  */
 const handleLanguageEvents = (io, socket) => {
-  // Listen for real-time language change events from a client
   socket.on('language_change', async ({ roomId, fileId, language }) => {
-    if (!fileId) return;
+    if (!fileId || !roomId) return;
 
     try {
+      // Check authorization
+      const role = await getRole(roomId, socket.user?.userId);
+      if (!['OWNER', 'EDITOR'].includes(role)) {
+        return console.warn(`[Socket] Blocked unauthorized language_change from socket ${socket.id}`);
+      }
+
       // 1. Maintain shared state: Update language in DB
       await fileService.updateFile(fileId, { language });
 

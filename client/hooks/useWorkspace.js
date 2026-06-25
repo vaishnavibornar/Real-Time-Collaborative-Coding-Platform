@@ -2,7 +2,7 @@ import { useEffect, useCallback } from 'react';
 import socket from '../lib/socket';
 import useFiles from './useFiles';
 
-export default function useWorkspace(roomId, username) {
+export default function useWorkspace(roomId, username, authFetch) {
   const {
     files,
     setFiles,
@@ -15,7 +15,7 @@ export default function useWorkspace(roomId, username) {
     renameFile,
     selectFile,
     deleteFile
-  } = useFiles();
+  } = useFiles(authFetch);
 
   // Find the active file object
   const activeFile = files.find((f) => f.fileId === activeFileId) || null;

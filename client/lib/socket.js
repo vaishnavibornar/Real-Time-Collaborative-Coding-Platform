@@ -1,8 +1,9 @@
 import { io } from 'socket.io-client';
+import { BACKEND_URL } from './api';
 
-// Connect to the backend server running on port 4000
-const socket = io('http://localhost:4000', {
-  autoConnect: true,
+// Connect to the backend server
+const socket = io(BACKEND_URL, {
+  autoConnect: false,
 });
 
 export default socket;

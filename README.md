@@ -14,6 +14,31 @@ A production-ready, highly interactive collaborative IDE that supports real-time
 *   **Zero-Config In-Memory Fallback**: No MongoDB running locally? No problem! The server automatically falls back to an in-memory database for local testing and developer previews.
 *   **Real-Time Chat Panel**: Built-in chat to collaborate and communicate in real time.
 *   **WebRTC Peer Connection**: Integrated signaling handlers to enable WebRTC audio and video calling.
+*   **🔒 Secure Workspaces & Roles**: Room creators can set rooms to `public` or `private`. Users join as `OWNER`, `EDITOR`, or `VIEWER`. Includes invite-by-email systems and dynamic room membership management.
+*   **📝 Production Application Logging**: Centralized, structured JSON file logging (`logs/combined.log`, `logs/error.log`) combined with clean, human-readable console logging powered by **Winston** & **Morgan** for HTTP tracking.
+*   **🛡️ Graceful Client Error Recovery**: Robust 404 screen when rooms do not exist, preventing UI rendering lockups.
+
+---
+
+## 🔒 Security & Role Permissions
+
+The platform enforces JWT authentication across REST API routes and Socket.io handshakes.
+
+*   **Access Control**: Private rooms restrict access. Guest or unapproved users are redirected to a secure "Join Gate" where they can submit access requests.
+*   **User Roles**:
+    *   `OWNER`: Complete control over the room, including updating visibility (public/private), promoting/demoting members, kicking users, accepting join requests, and deleting the room.
+    *   `EDITOR`: Full read-write permission for workspace files.
+    *   `VIEWER`: Read-only access to files; restricted from creating, renaming, deleting, or editing files.
+
+---
+
+## 📝 Logging System
+
+The backend employs a production-grade logging architecture built on Winston and Morgan:
+*   **Combined Logs**: Written in structured JSON to `server/logs/combined.log` (level `info`).
+*   **Error Logs**: Written to `server/logs/error.log` (level `error`).
+*   **Console logs**: Colorized and formatted cleanly for development.
+*   **HTTP Request Logs**: Morgan streams status codes, HTTP methods, and response latencies directly into Winston.
 
 ---
 
@@ -31,6 +56,7 @@ A production-ready, highly interactive collaborative IDE that supports real-time
 *   **Express**
 *   **Socket.io Server**
 *   **MongoDB & Mongoose** (with In-Memory backup)
+*   **Winston & Morgan** (Logging stack)
 
 ---
 
@@ -44,14 +70,16 @@ Real-Time-Collaborative-Coding-Platform/
 │   │   └── page.jsx            # Landing / Join room page
 │   ├── components/             # React UI components (Sidebar, Chat, etc.)
 │   ├── hooks/                  # Custom React hooks (useWorkspace, useFiles)
-│   └── lib/                    # Configuration / Socket Client
+│   └── lib/                    # Configuration / Socket Client (api.js, socket.js)
 ├── server/                     # Express & Socket.io Backend
+│   ├── logs/                   # Winston log files (gitignored)
 │   ├── src/
 │   │   ├── config/             # DB & server initialization
-│   │   ├── models/             # Mongoose schemas (Room, File)
-│   │   ├── routes/             # REST APIs (Room CRUD, File CRUD)
+│   │   ├── models/             # Mongoose schemas (Room, File, RoomMember, User, Invitation)
+│   │   ├── routes/             # REST APIs (Room CRUD, File CRUD, Auth, Invitations)
 │   │   ├── services/           # Workspace & debounced auto-save logic
-│   │   └── socket/             # Real-time event handlers
+│   │   ├── socket/             # Real-time event handlers
+│   │   └── utils/              # Winston log configuration
 │   └── .env                    # Environment variables
 └── README.md                   # Project documentation
 ```
@@ -77,6 +105,8 @@ Real-Time-Collaborative-Coding-Platform/
     ```env
     PORT=4000
     MONGODB_URI=mongodb://127.0.0.1:27017/collaborative-editor
+    JWT_SECRET=your_jwt_secret_here
+    CLIENT_URL=http://localhost:3000
     ```
 4. Start the server in development mode:
     ```bash
@@ -92,17 +122,30 @@ Real-Time-Collaborative-Coding-Platform/
     ```bash
     npm install
     ```
-3. Start the Next.js development server:
+3. Create a `.env.local` file in the `client` directory:
+    ```env
+    NEXT_PUBLIC_API_URL=http://localhost:4000
+    ```
+4. Start the Next.js development server:
     ```bash
     npm run dev
     ```
 
-Open `http://localhost:3000` in multiple browser tabs, enter a room ID, and start collaborating!
+Open `http://localhost:3000` in multiple browser tabs, sign up/login, and start collaborating!
 
 ---
 
-## 💾 Workspace Persistence & Fallback Mode
+## 🌐 Production Deployment (e.g. Vercel & Render)
 
-This application implements a smart persistence layer:
-*   **MongoDB Mode**: If a MongoDB database is running at `MONGODB_URI`, the server establishes a connection. Rooms and files are persistent and survive server restarts.
-*   **In-Memory Fallback Mode**: If MongoDB is not reachable (e.g. `ECONNREFUSED`), the server displays a warning and enables an **In-Memory fallback store**. All workspace operations (adding files, editing code, renaming, deleting, collaborative syncing) work identically, but data is cleared when the backend process restarts.
+For full deployment, follow these setup requirements to ensure secure client-backend communication:
+
+### 1. Backend Deployment (Render, Heroku, or Railway)
+Deploy the Node.js/Express server to a persistent provider. Provide the following environment variables:
+*   `PORT`: Port for the server to listen on.
+*   `MONGODB_URI`: Production MongoDB connection string.
+*   `JWT_SECRET`: Secure cryptographic token secret.
+*   `CLIENT_URL`: URL of the deployed frontend client (e.g., `https://cosphere-client.vercel.app`). This is used to bypass CORS blocks.
+
+### 2. Frontend Deployment (Vercel)
+Deploy the Next.js frontend to Vercel. Set the following environment variables in the Vercel dashboard:
+*   `NEXT_PUBLIC_API_URL`: URL of the deployed backend server (e.g., `https://cosphere-backend.onrender.com`).

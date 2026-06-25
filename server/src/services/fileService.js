@@ -3,8 +3,7 @@ const File = require('../models/File');
 const crypto = require('crypto');
 
 // In-memory data store for fallback mode
-const roomsInMemory = new Map();
-const filesInMemory = new Map();
+const { rooms: roomsInMemory, files: filesInMemory } = require('./memoryStore');
 
 // In-memory cache for pending debounced file saves: fileId -> { timeout, saveFn, content }
 const pendingSaves = new Map();
